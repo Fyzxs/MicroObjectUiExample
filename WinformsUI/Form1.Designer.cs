@@ -35,6 +35,7 @@
             this.label2 = new System.Windows.Forms.Label();
             this.lblError = new System.Windows.Forms.Label();
             this.btnLogIn = new System.Windows.Forms.Button();
+            this.lblWelcome = new System.Windows.Forms.Label();
             // 
             // lblUserName
             // 
@@ -99,6 +100,16 @@
             this.btnLogIn.UseVisualStyleBackColor = true;
             this.btnLogIn.Click += new System.EventHandler(this.btnLogIn_Click);
             // 
+            // lblWelcome
+            // 
+            this.lblWelcome.AutoSize = true;
+            this.lblWelcome.Location = new System.Drawing.Point(7, 147);
+            this.lblWelcome.Name = "lblWelcome";
+            this.lblWelcome.Size = new System.Drawing.Size(125, 15);
+            this.lblWelcome.TabIndex = 0;
+            this.lblWelcome.Text = "Welcome, ##NAME##";
+            this.lblWelcome.Visible = false;
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
@@ -111,6 +122,7 @@
             this.Controls.Add(this.lblUserName);
             this.Controls.Add(this.txtPassword);
             this.Controls.Add(this.lblPassword);
+            this.Controls.Add(this.lblWelcome);
             this.Name = "Form1";
             this.Text = "Form1";
 
@@ -125,6 +137,7 @@
         private System.Windows.Forms.Label label2;
         private System.Windows.Forms.Label lblError;
         private System.Windows.Forms.Button btnLogIn;
+        private System.Windows.Forms.Label lblWelcome;
     }
 }
 
