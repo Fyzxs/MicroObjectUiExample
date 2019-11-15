@@ -32,7 +32,6 @@
             this.txtUserName = new System.Windows.Forms.TextBox();
             this.txtPassword = new System.Windows.Forms.TextBox();
             this.lblPassword = new System.Windows.Forms.Label();
-            this.label2 = new System.Windows.Forms.Label();
             this.lblError = new System.Windows.Forms.Label();
             this.btnLogIn = new System.Windows.Forms.Button();
             this.lblWelcome = new System.Windows.Forms.Label();
@@ -69,15 +68,6 @@
             this.lblPassword.Size = new System.Drawing.Size(57, 15);
             this.lblPassword.TabIndex = 0;
             this.lblPassword.Text = "Password";
-            // 
-            // label2
-            // 
-            this.label2.AutoSize = true;
-            this.label2.Location = new System.Drawing.Point(-327, 1056);
-            this.label2.Name = "label2";
-            this.label2.Size = new System.Drawing.Size(38, 15);
-            this.label2.TabIndex = 2;
-            this.label2.Text = "label2";
             // 
             // lblError
             // 
@@ -117,7 +107,6 @@
             this.ClientSize = new System.Drawing.Size(800, 450);
             this.Controls.Add(this.btnLogIn);
             this.Controls.Add(this.lblError);
-            this.Controls.Add(this.label2);
             this.Controls.Add(this.txtUserName);
             this.Controls.Add(this.lblUserName);
             this.Controls.Add(this.txtPassword);
@@ -134,7 +123,6 @@
         private System.Windows.Forms.TextBox txtUserName;
         private System.Windows.Forms.TextBox txtPassword;
         private System.Windows.Forms.Label lblPassword;
-        private System.Windows.Forms.Label label2;
         private System.Windows.Forms.Label lblError;
         private System.Windows.Forms.Button btnLogIn;
         private System.Windows.Forms.Label lblWelcome;
