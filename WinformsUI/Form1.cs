@@ -1,61 +1,219 @@
 ﻿using System;
-using System.CodeDom;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
-using System.Windows.Forms.Design;
 
 namespace WinformsUI
 {
     public partial class Form1 : Form, IMainForm
     {
-        public Form1()
+        private readonly ILogInAction _logInAction;
+
+        public Form1():this(new Authenticate_LogInAction()){}
+
+        private Form1(ILogInAction logInAction)
         {
+            _logInAction = logInAction;
+
             InitializeComponent();
         }
 
-        private void btnLogIn_Click(object sender, EventArgs e)
-        {
-            IMainForm mainForm = this;
-            //If valid
-            if (txtUserName.Text == "Quinn")
-            {
-                //  UserName/password return User
+        private void btnLogIn_Click(object sender, EventArgs e) => _logInAction.Act(this);
 
-                //  hide Controls
-                mainForm.LogInControlsVisibility().Hide();
-
-                //  show controls
-                mainForm.WelcomeLabelVisibility().Show();
-
-                //  set values
-                mainForm.WelcomeLabelWriter().Write("Welcome Quinn");
-            }
-            else
-            {
-                //  Show error
-                mainForm.ErrorLabelVisibility().Show();
-
-                //Clear password
-                mainForm.PasswordTextBoxWriter().Write(string.Empty);
-            }
-        }
-
+        public IAuthnRequest AuthnRequest() => new MainFormAuthnRequest(this);
         public IVisibility UserNameLabelVisibility() => new ControlVisibility(lblUserName);
         public IVisibility UserNameTextBoxVisibility() => new ControlVisibility(txtUserName);
-        public IVisibility PasswordLabelVisibility() => new ControlVisibility(txtUserName);
+        public UserName UserNameControl() => new UserNameControl(txtUserName);
+        public IVisibility PasswordLabelVisibility() => new ControlVisibility(lblPassword);
         public IVisibility PasswordTextBoxVisibility() => new ControlVisibility(txtPassword);
-        public IWriteText PasswordTextBoxWriter() => new ControlWriteText(txtPassword);
+        public IPassword Password() => new PasswordControl(txtPassword);
         public IVisibility ErrorLabelVisibility() => new ControlVisibility(lblError);
         public IVisibility LogInButtonVisibility() => new ControlVisibility(btnLogIn);
         public IVisibility WelcomeLabelVisibility() => new ControlVisibility(lblWelcome);
         public IWriteText WelcomeLabelWriter() => new ControlWriteText(lblWelcome);
         public IVisibility LogInControlsVisibility() => new LogInControlsVisibility(this);
+    }
+
+    internal sealed class Authenticate_LogInAction: ILogInAction
+    {
+        private readonly IAuthentication _authentication;
+        private readonly ILogInAction _isAuthnAction;
+        private readonly ILogInAction _notAuthnAction;
+
+        public Authenticate_LogInAction():this(
+            new HardCodedAuthentication(), new IsAuthenticated_LogInAction(), new NotAuthenticated_LogInAction()){}
+
+        private Authenticate_LogInAction(IAuthentication authentication, ILogInAction isAuthnAction, ILogInAction notAuthnAction)
+        {
+            _authentication = authentication;
+            _isAuthnAction = isAuthnAction;
+            _notAuthnAction = notAuthnAction;
+        }
+
+        public void Act(IMainForm mainForm)
+        {
+            if (_authentication.IsNotAuthenticated(mainForm.AuthnRequest()))
+            {
+                _notAuthnAction.Act(mainForm);
+                return;
+            }
+
+            _isAuthnAction.Act(mainForm);
+        }
+    }
+
+    internal sealed class IsAuthenticated_LogInAction : ILogInAction
+    {
+        private readonly ILogInAction _nextAction;
+        public IsAuthenticated_LogInAction() : this(
+            new HideLogInControls_LogInAction(
+                new ShowAuthenticatedControls_LogInAction(
+                    new DisplayWelcome_LogInAction(
+                        new NoOp_LogInAction())))) { }
+        private IsAuthenticated_LogInAction(ILogInAction nextAction) => _nextAction = nextAction;
+        public void Act(IMainForm mainForm) => _nextAction.Act(mainForm);
+    }
+
+    internal sealed class HideLogInControls_LogInAction : ILogInAction
+    {
+        private readonly ILogInAction _nextAction;
+        public HideLogInControls_LogInAction(ILogInAction nextAction) => _nextAction = nextAction;
+        public void Act(IMainForm mainForm)
+        {
+            mainForm.LogInControlsVisibility().Hide();
+            _nextAction.Act(mainForm);
+        }
+    }
+
+    internal sealed class ShowAuthenticatedControls_LogInAction : ILogInAction
+    {
+        private readonly ILogInAction _nextAction;
+        public ShowAuthenticatedControls_LogInAction(ILogInAction nextAction) => _nextAction = nextAction;
+        public void Act(IMainForm mainForm)
+        {
+            mainForm.WelcomeLabelVisibility().Show();
+            _nextAction.Act(mainForm);
+        }
+    }
+
+    internal sealed class DisplayWelcome_LogInAction : ILogInAction
+    {
+        private readonly ILogInAction _nextAction;
+        public DisplayWelcome_LogInAction(ILogInAction nextAction) => _nextAction = nextAction;
+        public void Act(IMainForm mainForm)
+        {
+            mainForm.WelcomeLabelWriter().Write($"Welcome {mainForm.AuthnRequest().UserName().ToSystemValue()}");
+            _nextAction.Act(mainForm);
+        }
+    }
+
+    internal sealed class NotAuthenticated_LogInAction : ILogInAction
+    {
+        private readonly ILogInAction _nextAction;
+        public NotAuthenticated_LogInAction() : this(
+            new ClearPassword_LogInAction(
+                new ShowError_LogInAction(
+                    new NoOp_LogInAction()))) { }
+        private NotAuthenticated_LogInAction(ILogInAction nextAction) => _nextAction = nextAction;
+        public void Act(IMainForm mainForm) => _nextAction.Act(mainForm);
+    }
+
+    internal sealed class ClearPassword_LogInAction : ILogInAction
+    {
+        private readonly ILogInAction _nextAction;
+        public ClearPassword_LogInAction(ILogInAction nextAction) => _nextAction = nextAction;
+        public void Act(IMainForm mainForm)
+        {
+            mainForm.Password().Clear();
+            _nextAction.Act(mainForm);
+        }
+    }
+
+    internal sealed class ShowError_LogInAction : ILogInAction
+    {
+        private readonly ILogInAction _nextAction;
+        public ShowError_LogInAction(ILogInAction nextAction) => _nextAction = nextAction;
+        public void Act(IMainForm mainForm)
+        {
+            mainForm.ErrorLabelVisibility().Show();
+            _nextAction.Act(mainForm);
+        }
+    }
+
+    internal sealed class NoOp_LogInAction : ILogInAction
+    {
+        public void Act(IMainForm mainForm) { }
+    }
+
+
+    public interface ILogInAction
+    {
+        void Act(IMainForm mainForm);
+    }
+
+    public sealed class UserNameControl : UserName
+    {
+        private readonly Control _control;
+
+        public UserNameControl(Control control) => _control = control;
+
+        public override bool Matches(string compareTo) => SystemValue().Equals(compareTo, StringComparison.InvariantCulture);
+
+        protected override string SystemValue() => _control.Text;
+    }
+
+    internal sealed class MainFormAuthnRequest : IAuthnRequest
+    {
+        private readonly IMainForm _mainForm;
+
+        public MainFormAuthnRequest(IMainForm mainForm) => _mainForm = mainForm;
+
+        public UserName UserName() => _mainForm.UserNameControl();
+
+        public IPassword Password() => _mainForm.Password();
+    }
+
+    public interface IAuthnRequest
+    {
+        UserName UserName();
+        IPassword Password();
+    }
+
+    public abstract class UserName : ToSystem<string>
+    {
+        public abstract bool Matches(string compareTo);
+    }
+
+    internal sealed class HardCodedAuthentication : IAuthentication
+    {
+        public bool IsAuthenticated(IAuthnRequest authnRequest)
+        {
+            return authnRequest.UserName().Matches("Quinn") &&
+                   authnRequest.Password().Matches("IsAwesome");
+        }
+
+        public bool IsNotAuthenticated(IAuthnRequest authnRequest) => !IsAuthenticated(authnRequest);
+    }
+
+    internal sealed class PasswordControl : IPassword
+    {
+        private readonly Control _control;
+
+        public PasswordControl(Control control) => _control = control;
+
+        public bool Matches(string compareTo) => _control.Text == compareTo;
+        public void Clear() => _control.Text = string.Empty;
+    }
+
+    public interface IPassword
+    {
+        bool Matches(string compareTo);
+        void Clear();
+    }
+
+    internal interface IAuthentication
+    {
+        bool IsAuthenticated(IAuthnRequest authnRequest);
+        bool IsNotAuthenticated(IAuthnRequest authnRequest);
     }
 
     internal sealed class ControlWriteText : IWriteText
@@ -67,7 +225,8 @@ namespace WinformsUI
         public void Write(string text) => _control.Text = text;
     }
 
-    public interface IWriteText {
+    public interface IWriteText
+    {
         void Write(string text);
     }
 
@@ -91,17 +250,20 @@ namespace WinformsUI
         }
     }
 
-    internal interface IMainForm {
+    public interface IMainForm
+    {
         IVisibility UserNameLabelVisibility();
         IVisibility UserNameTextBoxVisibility();
+        UserName UserNameControl();
         IVisibility PasswordLabelVisibility();
         IVisibility PasswordTextBoxVisibility();
+        IPassword Password();
         IVisibility ErrorLabelVisibility();
         IVisibility LogInButtonVisibility();
         IVisibility WelcomeLabelVisibility();
         IWriteText WelcomeLabelWriter();
         IVisibility LogInControlsVisibility();
-        IWriteText PasswordTextBoxWriter();
+        IAuthnRequest AuthnRequest();
     }
 
     public sealed class ControlVisibility : IVisibility
@@ -163,5 +325,11 @@ namespace WinformsUI
 
         private readonly bool _value;
         private Visible(bool value) => _value = value;
+    }
+
+    public abstract class ToSystem<T>
+    {
+        public T ToSystemValue() => SystemValue();
+        protected abstract T SystemValue();
     }
 }
